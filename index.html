@@ -1,0 +1,1886 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loja Nicks</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+    body { background: #f5f5f5; color: #222; }
+    .cabecalho {
+      background: #000; min-height: 100px; padding: 12px 25px;
+      display: flex; align-items: center; justify-content: center; position: relative;
+    }
+    .logo-link { display: flex; align-items: center; justify-content: center; }
+    .logo-text { display:block; padding: 8px 18px; font-size: clamp(38px, 6vw, 66px); line-height:1; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:#fff; background:linear-gradient(100deg,#ffffff 0%,#d9c4ff 28%,#a855f7 58%,#7c3aed 78%,#ffffff 100%); background-clip:text; -webkit-background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 3px 0 #32105f) drop-shadow(0 0 14px rgba(168,85,247,.8)); }
+    #admButton {
+      position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+      background: #ff9800; color: #111; border: none; padding: 10px 15px;
+      border-radius: 6px; cursor: pointer; font-weight: bold; z-index: 2;
+    }
+    nav { background: #222; padding: 12px; text-align: center; }
+    nav a { color: white; text-decoration: none; margin: 0 12px; }
+    .categorias { display: flex; gap: 8px; overflow-x: auto; padding: 12px; background: white; white-space: nowrap; }
+    .categoria { border: none; background: #eee; padding: 9px 13px; border-radius: 20px; cursor: pointer; flex-shrink: 0; font-size: 13px; }
+    .categoria.ativa { background: #ff9800; color: #111; font-weight: bold; }
+    .banner { background: linear-gradient(120deg, #111, #444); color: white; text-align: center; padding: 40px 15px; }
+    .banner h2 { font-size: 28px; margin-bottom: 10px; }
+    .container { max-width: 1400px; margin: auto; padding: 20px; }
+    .container h2 { margin-bottom: 18px; }
+    #loginArea, #adminArea { display: none; background: white; padding: 20px; margin: 20px auto; max-width: 500px; border-radius: 10px; box-shadow: 0 2px 8px #0002; }
+    input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; }
+    .botao { background: #ff9800; border: none; padding: 10px 14px; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 8px; }
+    .botao:hover { background: #e68900; }
+    .produtos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .produto { background: white; border-radius: 8px; padding: 10px; box-shadow: 0 2px 8px #0001; min-width: 0; }
+    .produto img { width: 100%; height: 140px; object-fit: contain; background: #fafafa; border-radius: 6px; }
+    .produto h3 { font-size: 14px; margin: 8px 0; overflow-wrap: anywhere; }
+    .preco { color: #16833b; font-size: 16px; font-weight: bold; margin: 8px 0; }
+    .categoria-tag { display: inline-block; background: #eee; padding: 4px 6px; border-radius: 10px; font-size: 10px; margin-bottom: 8px; }
+    .produto button { width: 100%; padding: 8px; font-size: 12px; margin-top: 6px; }
+    .mensagem-vazia { text-align: center; padding: 30px; color: #666; grid-column: 1 / -1; }
+    footer { background: #111; color: white; text-align: center; padding: 20px; margin-top: 30px; }
+    @media (max-width: 600px) {
+      .cabecalho { min-height: 85px; padding: 10px; }
+      .logo-text { font-size: clamp(34px, 9vw, 48px); padding: 6px 10px; }
+      #admButton { left: 8px; padding: 8px 10px; font-size: 12px; }
+      .container { padding: 12px; }
+      .produtos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .produto img { height: 120px; }
+      nav a { margin: 0 7px; }
+    }
+  
+.navegacao-paginas {
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 10px 18px;
+  background: #f0f0f0;
+}
+.navegacao-paginas button {
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 14px;
+  background: #fff;
+  color: #222;
+  cursor: pointer;
+  font-weight: 600;
+}
+.navegacao-paginas button:hover { background: #e3e3e3; }
+.navegacao-paginas button.ativo { background: #ff9800; border-color: #ff9800; }
+
+
+.navegacao-paginas a {
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px 14px;
+  background: #fff;
+  color: #222;
+  text-decoration: none;
+  font-weight: 600;
+}
+.navegacao-paginas a:hover { background: #e3e3e3; }
+.navegacao-paginas a.ativo { background: #ff9800; border-color: #ff9800; }
+.navegacao-paginas button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+nav a.ativo { font-weight: 700; text-decoration: underline; }
+
+
+/* Detalhes dos produtos e área de vídeo */
+.produto { cursor: pointer; transition: transform .18s ease, box-shadow .18s ease; }
+.produto:hover { transform: translateY(-3px); box-shadow: 0 5px 18px #0002; }
+.produto:focus-visible { outline: 3px solid #ff9800; outline-offset: 3px; }
+/* Janela de compra e galeria ampliada de fotos e vídeos */
+.detalhe-produto-overlay { display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,.82); padding:18px; overflow:auto; align-items:center; justify-content:center; }
+.detalhe-produto-overlay.aberto { display:flex; }
+.detalhe-produto-caixa { position:relative; width:min(1500px, 98vw); max-height:92vh; min-height:min(84vh, 900px); overflow-y:auto; overscroll-behavior:contain; background:#fff; border-radius:14px; padding:26px; display:grid; grid-template-columns:minmax(0,1.8fr) minmax(280px,.72fr); gap:26px; box-shadow:0 12px 40px #0008; margin:auto; }
+.detalhe-produto-caixa img, .galeria-palco video, .galeria-palco iframe { width:100%; height:clamp(360px, 76vh, 840px); min-height:360px; object-fit:contain; background:#111; border-radius:10px; display:block; }
+.detalhe-produto-caixa h2 { margin:8px 0 12px; }
+.detalhe-produto-fechar { position:fixed !important; top:16px !important; right:16px !important; z-index:10003 !important; display:flex !important; align-items:center; justify-content:center; border:3px solid #fff !important; background:#e53935 !important; color:#fff !important; border-radius:50% !important; width:54px !important; height:54px !important; font-size:36px !important; line-height:1 !important; font-weight:bold; cursor:pointer; box-shadow:0 3px 14px #0008; }
+.detalhe-produto-fechar:hover { background:#b71c1c !important; transform:scale(1.06); }
+.detalhe-produto-fechar:focus-visible { outline:3px solid #ff9800; outline-offset:4px; }
+.aviso-deslize-comprar { position:fixed; top:25px; right:82px; z-index:10003; max-width:min(340px, calc(100vw - 155px)); padding:9px 12px; border-radius:8px; background:#fff3df; color:#542f00; font-size:14px; font-weight:700; line-height:1.25; box-shadow:0 2px 10px #0005; text-align:center; }
+.detalhe-produto-info { padding:22px 8px 8px; }
+.galeria-produto { min-width:0; width:100%; }
+.galeria-palco { width:100%; min-height:360px; }
+.galeria-controles { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; }
+.galeria-controles button { padding:12px 18px; cursor:pointer; }
+.detalhe-produto-info .preco { font-size:24px; }
+.formas-pagamento { font-weight:600; margin:10px 0 16px; color:#222; }
+#secaoVideo { background:#fff; border-radius:12px; margin:20px auto; }
+.video-loja { width:100%; max-width:900px; margin:0 auto; aspect-ratio:16/9; background:#111; border-radius:10px; overflow:hidden; }
+.video-loja video, .video-loja iframe { width:100%; height:100%; border:0; display:block; }
+.video-vazio { color:#666; text-align:center; padding:35px 15px; }
+.admin-ajuda { color:#666; font-size:13px; line-height:1.5; margin:5px 0 12px; }
+@media(max-width:750px) {
+  .detalhe-produto-overlay { padding:8px; align-items:flex-start; }
+  .detalhe-produto-caixa { width:100%; min-height:0; grid-template-columns:1fr; padding:64px 12px 16px; gap:12px; border-radius:10px; }
+  .detalhe-produto-caixa img, .galeria-palco video, .galeria-palco iframe { height:clamp(320px, 68vh, 680px); min-height:320px; }
+  .galeria-palco { min-height:320px; }
+  .detalhe-produto-info { padding:0; }
+  .detalhe-produto-fechar { top:10px !important; right:10px !important; width:50px !important; height:50px !important; font-size:34px !important; }
+  .aviso-deslize-comprar { top:17px; right:68px; max-width:calc(100vw - 132px); padding:8px 9px; font-size:12px; }
+}
+
+
+    .entrega-form { margin: 14px 0; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+    .entrega-form label { display:block; font-weight:600; margin-top:8px; }
+    .entrega-form input { width:100%; padding:10px; border:1px solid #ccc; border-radius:5px; margin:5px 0; }
+    .entrega-form .botao { margin-right:6px; }
+    .instrucao-rolagem { margin:10px 0; padding:10px; background:#fff3df; border-left:4px solid #ff9800; border-radius:5px; }
+    .campos-entrega { margin-top:12px; }
+    .abas-loja { display:flex; gap:10px; justify-content:center; padding:12px; background:#222; flex-wrap:wrap; }
+    .abas-loja a { color:#fff; text-decoration:none; padding:9px 14px; border-radius:20px; background:#444; font-weight:bold; }
+    .abas-loja a:hover { background:#ff9800; color:#111; }
+    .aviso-acesso-pc { display:none; max-width:850px; margin:45px auto; padding:35px 24px; text-align:center; background:#fff; border-radius:12px; box-shadow:0 2px 12px #0002; }
+    .aviso-acesso-pc h2 { margin-bottom:12px; }
+    .carrinho-linha { display:grid; grid-template-columns:1fr auto auto; gap:12px; align-items:center; padding:12px; background:#fff; border-bottom:1px solid #ddd; }
+    .carrinho-linha button { padding:7px 10px; cursor:pointer; }
+    .carrinho-total { font-size:20px; font-weight:bold; margin:18px 0; }
+    #carrinho .entrega-form { margin-top:24px; }
+    #carrinho .botao-carrinho { display:block; width:100%; min-height:48px; font-size:16px; margin-top:18px; }
+    .botao-carrinho { background:#16833b !important; color:#fff; }
+    .galeria-palco { position:relative; }
+    .lista-midias-admin { display:grid; gap:7px; margin:8px 0 14px; }
+    .midia-admin-item { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:8px 10px; border:1px solid #e3e0ee; border-radius:9px; background:#faf9ff; font-size:13px; }
+    .midia-admin-item button { margin:0; padding:7px 10px; background:#c62828; color:#fff; border:0; border-radius:7px; cursor:pointer; }
+    @media(max-width:750px) {
+      .carrinho-linha { grid-template-columns:1fr auto; }
+      .carrinho-linha .carrinho-subtotal { grid-column:1 / -1; }
+      }
+
+
+
+/* Abas de navegação para celular */
+.abas-loja { display:flex !important; }
+.aba-loja { border:0; border-radius:22px; padding:11px 20px; background:#444; color:#fff; font-weight:700; cursor:pointer; font-size:15px; }
+.aba-loja.ativa { background:#ff9800; color:#111; }
+@media(max-width:750px) {
+  .abas-loja { position:sticky; top:0; z-index:100; }
+  #produtos, #carrinho { display:block; }
+  #carrinho { display:none; }
+  #produtos.aba-visivel, #carrinho.aba-visivel { display:block !important; }
+}
+
+
+
+/* Ajustes finais dos botões */
+.produto .botao { display:block; width:100%; margin-top:8px; }
+.produto .botao-carrinho { margin-bottom:4px; }
+.aviso-acesso-pc h2 { font-size:26px; }
+.aviso-acesso-pc p { font-size:17px; }
+\n
+    .mensagem-carrinho-toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); z-index: 99999; background: #198754; color: #fff; padding: 13px 20px; border-radius: 10px; box-shadow: 0 4px 18px #0003; font-weight: 700; text-align: center; opacity: 0; visibility: hidden; transition: opacity .2s, transform .2s, visibility .2s; width: max-content; max-width: calc(100% - 32px); }
+    .mensagem-carrinho-toast.visivel { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+
+
+/* NOVA IDENTIDADE VISUAL — roxo elegante, lavanda suave e verde para ações positivas */
+:root {
+  --cor-fundo: #f5f3ff;
+  --cor-superficie: #ffffff;
+  --cor-escura: #17152f;
+  --cor-escura-2: #242044;
+  --cor-primaria: #6d5dfc;
+  --cor-primaria-hover: #5848e5;
+  --cor-primaria-clara: #eeeaff;
+  --cor-texto: #25233a;
+  --cor-sucesso: #119b78;
+  --cor-borda: #e5e1f5;
+}
+body { background:var(--cor-fundo) !important; color:var(--cor-texto) !important; }
+.cabecalho { background:linear-gradient(135deg,#17152f 0%,#30265f 100%) !important; }
+#admButton, .botao, .categoria.ativa, .navegacao-paginas button.ativo,
+.navegacao-paginas a.ativo, .aba-loja.ativa {
+  background:var(--cor-primaria) !important; color:#fff !important; border-color:var(--cor-primaria) !important;
+}
+#admButton:hover, .botao:hover, .categoria.ativa:hover,
+.navegacao-paginas button.ativo:hover, .navegacao-paginas a.ativo:hover,
+.aba-loja.ativa:hover { background:var(--cor-primaria-hover) !important; }
+nav, .abas-loja { background:var(--cor-escura) !important; }
+nav a, .abas-loja a { color:#fff !important; }
+.abas-loja a, .aba-loja { background:#353052 !important; color:#fff !important; }
+.abas-loja a:hover, .aba-loja:hover { background:var(--cor-primaria) !important; color:#fff !important; }
+.categorias { background:#fff !important; border-bottom:1px solid var(--cor-borda) !important; }
+.categoria { background:var(--cor-primaria-clara) !important; color:#393260 !important; }
+.categoria.ativa { background:var(--cor-primaria) !important; color:#fff !important; }
+.banner { background:linear-gradient(120deg,#211b49 0%,#6d5dfc 100%) !important; color:#fff !important; }
+.container h2, .detalhe-produto-info h2 { color:#29244d !important; }
+.produto, #loginArea, #adminArea, .aviso-acesso-pc, #secaoVideo {
+  background:var(--cor-superficie) !important; border:1px solid var(--cor-borda) !important;
+  box-shadow:0 5px 18px rgba(49,36,110,.08) !important;
+}
+.produto:hover { box-shadow:0 10px 26px rgba(76,58,170,.16) !important; }
+.produto img { background:#f8f7ff !important; }
+.preco { color:var(--cor-sucesso) !important; }
+.categoria-tag { background:#eeeaff !important; color:#5144a0 !important; }
+footer { background:var(--cor-escura) !important; color:#f7f5ff !important; }
+.navegacao-paginas { background:#eeebfb !important; }
+.navegacao-paginas button, .navegacao-paginas a {
+  background:#fff !important; color:#393260 !important; border-color:#d9d3f2 !important;
+}
+.navegacao-paginas button:hover, .navegacao-paginas a:hover { background:#eeeaff !important; }
+.navegacao-paginas button.ativo, .navegacao-paginas a.ativo { background:var(--cor-primaria) !important; color:#fff !important; }
+.detalhe-produto-caixa { background:#fff !important; border:1px solid var(--cor-borda) !important; }
+.detalhe-produto-fechar { background:#e5486d !important; }
+.detalhe-produto-fechar:hover { background:#c92f55 !important; }
+.detalhe-produto-fechar:focus-visible, .produto:focus-visible { outline-color:#8b7fff !important; }
+.aviso-deslize-comprar, .instrucao-rolagem { background:#eeeaff !important; color:#352b75 !important; border-left-color:var(--cor-primaria) !important; }
+.entrega-form { background:#faf9ff !important; border-color:var(--cor-borda) !important; }
+input, select, textarea, .entrega-form input { border-color:#d9d3f2 !important; background:#fff !important; color:var(--cor-texto) !important; }
+input:focus, select:focus, textarea:focus, .entrega-form input:focus { outline:2px solid #b9b0ff !important; border-color:var(--cor-primaria) !important; }
+.carrinho-linha { background:#fff !important; border-bottom-color:var(--cor-borda) !important; }
+.botao-carrinho { background:var(--cor-sucesso) !important; color:#fff !important; }
+.botao-carrinho:hover { background:#0d8063 !important; }
+.mensagem-carrinho-toast { background:var(--cor-sucesso) !important; color:#fff !important; }
+
+
+.aba-falar-loja { display:inline-flex; align-items:center; justify-content:center; text-decoration:none; background:#119b78 !important; color:#fff !important; border:1px solid #119b78 !important; border-radius:8px; padding:10px 16px; font-weight:700; }
+.aba-falar-loja:hover { background:#0d8063 !important; color:#fff !important; }
+.abas-loja { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:10px; padding:12px; }
+.abas-loja .aba-loja { border:1px solid rgba(255,255,255,.16); border-radius:8px; padding:10px 14px; font-weight:700; cursor:pointer; }
+
+
+/* ===== LOJA NICKS — identidade visual ===== */
+:root{--accent:#7c5cff;--accent2:#23d5ab;--ink:#17152b;--surface:#fff;--page:#f5f4fb;--radius:20px;--glow:rgba(124,92,255,.18)}
+html{scroll-behavior:smooth}
+body{background:var(--page)!important;color:#24213a!important;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Arial,sans-serif!important}
+.cabecalho{min-height:112px!important;padding:18px 28px!important;background:radial-gradient(ellipse at 50% 0%,color-mix(in srgb,var(--accent) 55%,#30205f),transparent 65%),linear-gradient(130deg,#100d22,#21153e 70%,#111827)!important;border-bottom:1px solid #ffffff16}
+.logo-text{font-size:clamp(36px,5vw,64px)!important;letter-spacing:-2px!important;background:linear-gradient(100deg,#fff 5%,color-mix(in srgb,var(--accent) 50%,white) 45%,#b7ffe9 90%)!important;background-clip:text!important;-webkit-background-clip:text!important;filter:drop-shadow(0 5px 20px var(--glow))!important}
+#admButton{border-radius:12px!important;background:#ffffff16!important;color:#fff!important;border:1px solid #ffffff30!important;backdrop-filter:blur(12px);padding:11px 16px!important}
+nav{background:#171329!important;padding:16px!important}
+nav a{font-weight:650;opacity:.85;transition:.2s}nav a:hover,nav a.ativo{opacity:1;color:#c8baff!important}
+.categorias{padding:15px 4vw!important;gap:10px!important;background:var(--surface)!important;border-bottom:1px solid #e9e6f4!important}
+.categoria{padding:10px 16px!important;border:1px solid #e8e4f5!important;background:#f7f5ff!important;border-radius:999px!important;font-weight:650!important;transition:.2s}
+.categoria:hover{transform:translateY(-1px);border-color:var(--accent)!important}.categoria.ativa{background:var(--accent)!important;border-color:var(--accent)!important;color:white!important;box-shadow:0 6px 18px var(--glow)}
+.banner{background:radial-gradient(ellipse at 80% 0%,color-mix(in srgb,var(--accent) 55%,#25134d),transparent 55%),linear-gradient(120deg,#171329,#30205c)!important;padding:62px 20px!important}
+.banner h2{font-size:clamp(28px,4vw,46px)!important;letter-spacing:-1.5px}.banner p{opacity:.82}
+.container{max-width:1360px!important;padding:30px 22px!important}.container h2{font-size:clamp(24px,3vw,34px)!important;letter-spacing:-.8px;margin-bottom:8px!important}
+.admin-ajuda{line-height:1.65!important;color:#77738e!important}
+.busca-produtos{max-width:540px;margin:18px 0 24px}.busca-produtos input{border-radius:14px!important;padding:15px 18px!important;background:#fff!important;box-shadow:0 4px 18px #30205c08}
+.produtos{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))!important;gap:18px!important}
+.produto{padding:13px!important;border-radius:var(--radius)!important;border:1px solid #eae7f5!important;box-shadow:0 6px 24px #30205c0b!important;transition:transform .25s,box-shadow .25s!important;overflow:hidden}
+.produto:hover{transform:translateY(-6px)!important;box-shadow:0 18px 38px var(--glow)!important;border-color:color-mix(in srgb,var(--accent) 25%,#fff)!important}
+.produto img{height:210px!important;background:linear-gradient(135deg,#f8f7ff,#eeebfa)!important;border-radius:14px!important;padding:8px}
+.produto h3{font-size:15px!important;line-height:1.4;min-height:42px;margin:12px 2px 8px!important}
+.categoria-tag{border-radius:999px!important;padding:5px 9px!important;background:#f0edff!important;color:#6552b5!important;font-weight:700}
+.preco{font-size:20px!important;color:#0a9a70!important;letter-spacing:-.3px}
+.botao{border-radius:12px!important;padding:12px 14px!important;background:var(--accent)!important;color:#fff!important;font-weight:750!important;transition:transform .18s,filter .18s!important}
+.botao:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.botao-carrinho{background:#079b76!important}
+#loginArea,#adminArea,.aviso-acesso-pc,#secaoVideo{border-radius:20px!important;padding:24px!important}
+.detalhe-produto-caixa{border-radius:24px!important;padding:24px!important}
+.detalhe-produto-info{padding:18px!important}
+.entrega-form{border-radius:16px!important;padding:16px!important;background:#faf9ff!important}
+input,select,textarea{border-radius:12px!important;padding:13px!important}
+footer{padding:28px!important;background:#151126!important}
+.mensagem-carrinho-toast{border-radius:14px!important}
+.navegacao-paginas{justify-content:center!important;flex-wrap:wrap;border-radius:14px}
+@media(max-width:750px){.container{padding:22px 14px!important}.produtos{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:11px!important}.produto{padding:9px!important;border-radius:15px!important}.produto img{height:145px!important}.produto h3{font-size:13px!important}.preco{font-size:17px!important}.produto .botao{font-size:11px!important;padding:10px 7px!important}.cabecalho{min-height:86px!important}.logo-text{letter-spacing:-1px!important}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+
+    .produto-descricao-resumo { margin: 7px 0 10px; font-size: 13px; line-height: 1.45; color: #555; overflow-wrap: anywhere; }
+    .produto-ver-mais { display: inline; border: 0; background: transparent; color: #5b35b5; font-weight: 700; padding: 2px 4px; margin: 0; cursor: pointer; text-decoration: underline; }
+</style>
+
+<style id="professional-finish">
+:root{
+ --accent:#5b35d5!important; --accent2:#14b8a6!important;
+ --page:#f5f6fa!important; --radius:18px!important;
+ --glow:rgba(91,53,213,.12)!important;
+}
+body{background:#f5f6fa!important;color:#172033!important;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif!important}
+.cabecalho{background:linear-gradient(115deg,#21134d,#5030b7)!important;box-shadow:0 8px 28px rgba(31,19,73,.18)!important;padding:20px 5%!important}
+.logo-text{font-weight:850!important;letter-spacing:-1.3px!important}
+.categorias{background:#fff!important;border-bottom:1px solid #e8eaf2!important;padding:12px 5%!important}
+.categorias button,.categoria-btn{border-radius:999px!important;font-weight:650!important}
+.container{max-width:1240px!important;margin:0 auto!important;padding:34px 24px!important}
+.produtos{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))!important;gap:22px!important}
+.produto{background:#fff!important;border:1px solid #e9eaf2!important;border-radius:20px!important;padding:15px!important;box-shadow:0 5px 18px rgba(28,34,56,.045)!important;transition:transform .2s,box-shadow .2s!important}
+.produto:hover{transform:translateY(-5px)!important;box-shadow:0 14px 32px rgba(28,34,56,.10)!important}
+.produto img{border-radius:14px!important;background:#f0f1f7!important}
+.produto h3{color:#1c2436!important;font-size:16px!important;font-weight:750!important}
+.preco{color:#5030b7!important;font-weight:850!important}
+.botao,button.botao{border-radius:12px!important;font-weight:700!important;box-shadow:none!important}
+#loginArea,#adminArea,.modal-content,.carrinho{border-radius:20px!important;box-shadow:0 18px 55px rgba(20,20,40,.14)!important}
+input,textarea,select{border:1px solid #dfe2ec!important;border-radius:12px!important;padding:12px 14px!important}
+input:focus,textarea:focus,select:focus{outline:3px solid rgba(91,53,213,.12)!important;border-color:#7657ff!important}
+footer{background:#201444!important;color:#e9e5ff!important}
+@media(max-width:650px){.container{padding:22px 14px!important}.produtos{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important}.produto{padding:10px!important}.produto img{height:150px!important}}
+</style>
+
+
+
+
+<style id="restaurar-visual-pc-original">
+/* No computador, mantém o comportamento original: mostrar apenas o aviso de acesso pelo celular. */
+@media screen and (min-width: 751px) {
+  body > :not(#avisoAcessoPC):not(script) { display: none !important; }
+  body > #avisoAcessoPC {
+    display: flex !important;
+    min-height: 65vh;
+    margin: 0 !important;
+    padding: 32px 20px !important;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  body > #avisoAcessoPC h2 {
+    margin: 0 !important;
+    font-size: clamp(24px, 3vw, 36px) !important;
+    line-height: 1.35;
+    color: #21134d !important;
+  }
+}
+@media screen and (max-width: 750px) {
+  body > #avisoAcessoPC { display: none !important; }
+}
+</style>
+
+
+<style id="ajuste-fotos-celular">
+/* Fotos mais compactas no celular, sem alterar a aparência no computador. */
+@media screen and (max-width: 750px) {
+  .produto img {
+    height: 105px !important;
+    max-height: 105px !important;
+    padding: 4px !important;
+    object-fit: contain !important;
+  }
+  .detalhe-produto-caixa img,
+  .galeria-palco video,
+  .galeria-palco iframe {
+    height: clamp(200px, 42vh, 360px) !important;
+    min-height: 200px !important;
+    max-height: 360px !important;
+  }
+  .galeria-palco { min-height: 200px !important; }
+}
+@media screen and (max-width: 380px) {
+  .produto img {
+    height: 95px !important;
+    max-height: 95px !important;
+  }
+}
+</style>
+
+</head>
+<body>
+  <header class="cabecalho" id="inicio">
+    <button id="admButton" onclick="abrirLogin()">ADM</button>
+    <a href="#inicio" class="logo-link" aria-label="Loja Nicks - início">
+      <span class="logo-text">Loja Nicks</span>
+    </a>
+  </header>
+
+<div class="categorias" id="barraCategorias"></div>
+
+
+
+
+  <section id="loginArea">
+    <h2>Login do administrador</h2>
+    <input type="text" id="usuario" placeholder="Usuário" autocomplete="username">
+    <input type="password" id="senha" placeholder="Senha do administrador" autocomplete="current-password">
+    <button class="botao" onclick="entrarAdmin()">Entrar</button>
+    <button class="botao" onclick="fecharLogin()">Fechar</button>
+    <p id="mensagemLogin"></p>
+  </section>
+
+  <section id="adminArea">
+    <h2>Adicionar produto</h2>
+    <p class="admin-ajuda" style="background:#fff4df;padding:10px;border-radius:6px;">Depois de entrar, você poderá cadastrar produtos, organizar links do YouTube e escolher a foto ou vídeo que aparecerá como capa principal.</p>
+    <input type="text" id="nomeProduto" placeholder="Nome do produto">
+    <label for="descricaoProduto">Descrição do produto (opcional):</label>
+    <textarea id="descricaoProduto" rows="3" maxlength="3000" placeholder="Escreva os detalhes do produto"></textarea>
+    <input type="number" id="precoProduto" placeholder="Preço (opcional)" min="0" step="0.01">
+    <select id="categoriaProduto"></select>
+    <label for="imagensProduto">Fotos do produto (opcional):</label>
+    <input type="file" id="imagensProduto" accept="image/*" multiple>
+    <small class="admin-ajuda" id="contadorFotosAdmin">Fotos opcionais. Você pode selecionar em várias etapas.</small>
+    <div id="listaFotosSelecionadasAdmin" class="lista-midias-admin"></div>
+    <label for="capaMidiaNova">Capa principal do produto: escolha qual foto ou vídeo aparecerá no cartão</label>
+    <select id="capaMidiaNova" onchange="atualizarPreviewCapaNova()"><option value="">Selecione uma foto ou vídeo</option></select>
+    <div id="previewCapaNova" class="capa-preview-admin"><span class="admin-ajuda">A prévia da capa escolhida aparecerá aqui.</span></div>
+    <label>Links do YouTube do produto (cada link em um campo separado):</label>
+    <div id="videoProdutoLinksContainer" class="youtube-links-admin"></div>
+    <button type="button" class="botao" onclick="adicionarCampoYoutube('videoProdutoLinksContainer')">+ Adicionar outro link do YouTube</button>
+    <small class="admin-ajuda">Cada link ficará em seu próprio campo e será mostrado separadamente na página do produto.</small>
+    <label for="videoProdutoArquivo">Enviar vídeos do computador (opcional, selecione vários):</label>
+    <input type="file" id="videoProdutoArquivo" accept="video/*,.mp4,.webm,.mov,.avi,.mkv,.m4v,.ogg,.ogv,.3gp,.mpeg,.mpg" multiple aria-label="Escolher vários arquivos de vídeo">
+    <small class="admin-ajuda" id="contadorVideosAdmin">Vídeos opcionais. Você pode selecionar em várias etapas.</small>
+    <div id="listaVideosSelecionadosAdmin" class="lista-midias-admin"></div>
+    <p class="admin-ajuda">Fotos, vídeos e preço são opcionais. O navegador e o aparelho ainda possuem limites próprios de armazenamento; para vídeos grandes, prefira links públicos.</p>
+    <button class="botao" onclick="adicionarProduto()">Adicionar produto</button>
+    <section id="editorProduto" style="display:none;margin:18px 0;padding:16px;border:2px solid #ff9800;border-radius:10px;">
+      <h3>Editar produto</h3>
+      <input id="editarNome" type="text" placeholder="Nome do produto">
+      <label for="editarDescricao">Descrição do produto:</label>
+      <textarea id="editarDescricao" rows="3" maxlength="3000" placeholder="Escreva os detalhes do produto"></textarea>
+      <input id="editarPreco" type="number" min="0" step="0.01" placeholder="Preço (opcional)">
+      <select id="editarCategoria"></select>
+      <p class="admin-ajuda">Fotos e vídeos são opcionais. Você pode adicionar mídias ou remover cada uma individualmente.</p>
+      <label for="editarFotos">Adicionar fotos:</label>
+      <input id="editarFotos" type="file" accept="image/*" multiple>
+      <label>Adicionar links do YouTube (cada link em um campo separado):</label>
+      <div id="editarVideoLinksContainer" class="youtube-links-admin"></div>
+      <button type="button" class="botao" onclick="adicionarCampoYoutube('editarVideoLinksContainer')">+ Adicionar outro link do YouTube</button>
+      <label for="editarVideosArquivos">Adicionar arquivos de vídeo (selecione vários):</label>
+      <input id="editarVideosArquivos" type="file" accept="video/*,.mp4,.webm,.mov,.avi,.mkv,.m4v,.ogg,.ogv,.3gp,.mpeg,.mpg" multiple>
+      <div id="editarMidiasLista"></div>
+      <button type="button" class="botao" onclick="salvarEdicaoProduto()">Salvar alterações</button>
+      <button type="button" class="botao" onclick="cancelarEdicaoProduto()" style="background:#ddd;">Cancelar</button>
+    </section>
+    <hr>
+    <h3>Gerenciar produtos</h3>
+    <p>Use o botão Remover ao lado do produto que deseja excluir.</p>
+    <div id="adminListaProdutos"></div>
+    <button class="botao" onclick="sairAdmin()">Fechar painel do ADM</button>
+  </section>
+
+  <section class="aviso-acesso-pc" id="avisoAcessoPC">
+    <h2>Acesse a loja pelo celular para ver os produtos.</h2>
+  </section>
+<div class="abas-loja" id="abasLoja" aria-label="Navegação da loja">
+    <button type="button" class="aba-loja ativa" onclick="mostrarAbaLoja('produtos')">Produtos</button>
+    <button type="button" class="aba-loja" onclick="mostrarAbaLoja('carrinho')">Comprar todos os produtos adicionados ao carrinho</button>
+    <a class="aba-loja aba-falar-loja" href="https://wa.me/5561995900539" target="_blank" rel="noopener noreferrer" aria-label="Falar com a Loja Nicks pelo WhatsApp">Falar com a loja</a>
+  </div>
+
+  <main class="container" id="produtos">
+    <h2>Produtos</h2>
+    <p class="admin-ajuda">Pesquise pelo nome do produto ou clique em um produto para ver fotos e vídeos.</p>
+    <div class="busca-produtos">
+      <input type="search" id="pesquisaProdutos" placeholder="Pesquisar produtos..." aria-label="Pesquisar produtos">
+    </div>
+    <div class="produtos" id="listaProdutos"></div>
+  </main>
+
+  <main class="container" id="carrinho">
+    <h2>Comprar todos os produtos adicionados ao carrinho</h2>
+    <p class="admin-ajuda">Confira os produtos adicionados e compre todos de uma vez pelo WhatsApp.</p>
+    <div id="listaCarrinho"></div>
+    <p class="carrinho-total" id="totalCarrinho">Total dos produtos: R$ 0,00</p>
+    <section class="entrega-form">
+      <strong>Como comprar todos os produtos adicionados ao carrinho</strong>
+      <p>Informe seu endereço completo e CEP para comprar os produtos pelo WhatsApp. Precisamos dessas informações primeiro para calcular o frete. Depois, enviaremos pelo WhatsApp o link de pagamento com o valor total dos produtos + frete.</p>
+      <label for="enderecoCarrinho">Endereço completo, bairro e cidade</label>
+      <input id="enderecoCarrinho" type="text" placeholder="Rua, número, complemento, bairro e cidade" autocomplete="street-address">
+      <label for="cepCarrinho">CEP</label>
+      <input id="cepCarrinho" type="text" inputmode="numeric" placeholder="Digite o CEP" autocomplete="postal-code">
+      <p class="instrucao-rolagem"><strong>Deslize para baixo no celular para comprar.</strong></p>
+      <button type="button" class="botao botao-carrinho" onclick="comprarCarrinhoWhatsApp()">Comprar todos os produtos do carrinho</button>
+    </section>
+  </main>
+
+
+  <div class="detalhe-produto-overlay" id="modalProduto" role="dialog" aria-modal="true" aria-labelledby="modalProdutoNome" onclick="fecharDetalheProdutoFora(event)">
+    <div class="detalhe-produto-caixa">
+      <span class="aviso-deslize-comprar">Deslize para baixo para comprar o produto</span>
+      <button type="button" class="detalhe-produto-fechar" onclick="fecharDetalheProduto()" aria-label="Fechar">×</button>
+      <div class="galeria-produto" id="galeriaProduto" aria-label="Fotos e vídeos do produto"></div>
+      <div class="detalhe-produto-info">
+        <span id="modalProdutoCategoria" class="categoria-tag"></span>
+        <h2 id="modalProdutoNome"></h2>
+        <p id="modalProdutoPreco" class="preco"></p>
+        <p class="admin-ajuda">O preço do produto pode sofrer alterações. Entre em contato com a loja para confirmar o valor atualizado.</p>
+        <p id="modalProdutoDescricao"></p>
+        <section class="entrega-form" aria-labelledby="tituloPagamentoFrete">
+          <strong id="tituloPagamentoFrete">Como comprar este produto</strong>
+          <p>Informe seu endereço completo e CEP para comprar o produto pelo WhatsApp. Precisamos dessas informações primeiro para calcular o frete. Depois, enviaremos pelo WhatsApp o link de pagamento com o valor total do produto + frete.</p>
+          <div class="campos-entrega">
+            <strong>Informe seus dados para entrega</strong>
+            <label for="enderecoEntrega">Endereço completo, bairro e cidade</label>
+            <input id="enderecoEntrega" type="text" placeholder="Rua, número, complemento, bairro e cidade" autocomplete="street-address" required>
+            <label for="cepEntrega">CEP</label>
+            <input id="cepEntrega" type="text" inputmode="numeric" placeholder="Digite o CEP" autocomplete="postal-code" required>
+          </div>
+          <p class="admin-ajuda">Após preencher o endereço e o CEP, toque em <strong>Enviar pelo WhatsApp</strong>. A loja calculará o frete e enviará o valor final e o link para pagamento. O pagamento será feito somente depois de receber essas informações.</p>
+        </section>
+        <button type="button" class="botao" onclick="comprarProdutoDetalhe()">Comprar produto via WhatsApp</button>
+        <button type="button" class="botao botao-carrinho" onclick="adicionarAoCarrinho()">Clique aqui 1 vez para adicionar o produto ao carrinho</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mensagemCarrinhoToast" class="mensagem-carrinho-toast" role="status" aria-live="polite"></div>
+
+  <footer id="contato">
+    <p>Loja Nicks - Todos os direitos reservados</p>
+  </footer>
+
+  <script>
+
+    const categorias = [
+      "Todas", "Roupas", "Calçados", "Celulares", "Eletrônicos",
+      "Informática", "Games", "Acessórios", "Beleza e cuidados pessoais",
+      "Casa e decoração", "Cozinha", "Móveis", "Esportes e fitness",
+      "Brinquedos", "Bebês e crianças", "Livros e papelaria",
+      "Produtos para pets", "Ferramentas", "Automóveis e motos",
+      "Alimentos e bebidas", "Relógios e joias", "Saúde e bem-estar", "Outros"
+    ];
+
+    let produtos = [];
+
+    // Mantém as alterações feitas pelo ADM neste navegador.
+    try {
+      const produtosSalvos = localStorage.getItem("lojaNicksProdutos");
+      if (produtosSalvos) {
+        const listaSalva = JSON.parse(produtosSalvos);
+        if (Array.isArray(listaSalva)) {
+          // Remove os 23 itens de demonstração da versão antiga; mantém apenas produtos reais adicionados pelo ADM.
+          produtos = listaSalva.filter(item => !(/^\d+$/.test(String(item.id)) && Number(item.id) >= 1 && Number(item.id) <= 23));
+          if (produtos.length !== listaSalva.length) localStorage.setItem("lojaNicksProdutos", JSON.stringify(produtos));
+        }
+      }
+    } catch (erro) {
+      console.warn("Não foi possível carregar os produtos salvos.", erro);
+    }
+
+    function salvarProdutos() {
+      try {
+        // Vídeos temporários do computador não sobrevivem ao recarregamento.
+        const listaPersistente = produtos.map(produto => ({
+          ...produto,
+          midias: Array.isArray(produto.midias) ? produto.midias : produto.midias
+        }));
+        localStorage.setItem("lojaNicksProdutos", JSON.stringify(listaPersistente));
+      } catch (erro) {
+        alert("O navegador não conseguiu guardar todos os arquivos. Não existe limite fixo de quantidade, mas o espaço de armazenamento do dispositivo é limitado. Tente arquivos menores ou use links públicos para vídeos grandes.");
+      }
+    }
+
+    // Autorização permanente neste navegador/perfil. Após o primeiro login correto,
+    // a permissão fica salva no localStorage e também em um cookie de longa duração.
+    const usuarioCorreto = "pablo";
+    const hashSenhaCorreta = "e446e3d6fc152f69beaf3facb703b5bd50c009657dfdaa58a4b7006ea736cbda";
+    const CHAVE_ACESSO_ADMIN_PERMANENTE = "lojaNicksAdminAutorizado_v7";
+    const COOKIE_ACESSO_ADMIN_PERMANENTE = "lojaNicksAdminAutorizado_v7";
+    const MARCADOR_ACESSO_ADMIN = "AUTORIZADO";
+    let adminLogado = false;
+
+    function temAcessoAdminPermanente() {
+      // Chaves antigas são reconhecidas para não obrigar um novo login após atualizar o arquivo.
+      const chavesLegadas = [
+        "lojaNicksAdminAutorizado_v6",
+        "lojaNicksAdminAutorizado_v5",
+        "lojaNicksAdminAutorizado_v4",
+        "lojaNicksAdminAutorizado_v3",
+        "lojaNicksAdminAutorizado_v2",
+        "lojaNicksAdminAutorizado"
+      ];
+      try {
+        if (localStorage.getItem(CHAVE_ACESSO_ADMIN_PERMANENTE) === MARCADOR_ACESSO_ADMIN) return true;
+        for (const chave of chavesLegadas) {
+          const valor = localStorage.getItem(chave);
+          if (valor === MARCADOR_ACESSO_ADMIN || (chave === "lojaNicksAdminAutorizado" && valor === "sim")) {
+            salvarAcessoAdminPermanente();
+            return true;
+          }
+        }
+      } catch (e) {}
+
+      try {
+        const cookies = document.cookie.split(";").map(parte => parte.trim());
+        const autorizado = cookies.some(cookie =>
+          cookie === COOKIE_ACESSO_ADMIN_PERMANENTE + "=" + MARCADOR_ACESSO_ADMIN ||
+          /^lojaNicksAdminAutorizado_v[2-6]=AUTORIZADO$/.test(cookie) ||
+          cookie === "lojaNicksAdminAutorizado=sim"
+        );
+        if (autorizado) {
+          salvarAcessoAdminPermanente();
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+
+    function salvarAcessoAdminPermanente() {
+      let salvou = false;
+      try {
+        localStorage.setItem(CHAVE_ACESSO_ADMIN_PERMANENTE, MARCADOR_ACESSO_ADMIN);
+        salvou = localStorage.getItem(CHAVE_ACESSO_ADMIN_PERMANENTE) === MARCADOR_ACESSO_ADMIN;
+      } catch (e) {}
+      try {
+        const secure = location.protocol === "https:" ? "; Secure" : "";
+        document.cookie = COOKIE_ACESSO_ADMIN_PERMANENTE + "=" + MARCADOR_ACESSO_ADMIN + "; Max-Age=315360000; Path=/; SameSite=Lax" + secure;
+        salvou = salvou || document.cookie.split(";").some(c => c.trim() === COOKIE_ACESSO_ADMIN_PERMANENTE + "=" + MARCADOR_ACESSO_ADMIN);
+      } catch (e) {}
+      return salvou;
+    }
+
+    async function calcularHashSenha(valor) {
+      if (!window.crypto || !window.crypto.subtle) throw new Error("A validação da senha precisa de um navegador com suporte a criptografia. Abra o site pelo endereço HTTPS.");
+      const bytes = new TextEncoder().encode(valor);
+      const digest = await window.crypto.subtle.digest("SHA-256", bytes);
+      return Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
+    function abrirAreaAdmin() {
+      document.getElementById("loginArea").style.display = "none";
+      document.getElementById("adminArea").style.display = "block";
+      adminLogado = true;
+      mostrarListaAdmin();
+      document.getElementById("adminArea").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function abrirLogin() {
+      // Quem já autorizou este navegador entra diretamente, inclusive após fechar/reabrir o site.
+      if (temAcessoAdminPermanente()) {
+        abrirAreaAdmin();
+        return;
+      }
+      document.getElementById("loginArea").style.display = "block";
+      document.getElementById("adminArea").style.display = "none";
+      adminLogado = false;
+      document.getElementById("usuario").focus();
+    }
+
+    function fecharLogin() {
+      document.getElementById("loginArea").style.display = "none";
+    }
+
+    async function entrarAdmin() {
+      const usuario = document.getElementById("usuario").value.trim();
+      const senha = document.getElementById("senha").value;
+      const mensagem = document.getElementById("mensagemLogin");
+      mensagem.textContent = "Verificando acesso...";
+      try {
+        const hashInformado = await calcularHashSenha(senha);
+        if (usuario === usuarioCorreto && hashInformado === hashSenhaCorreta) {
+          if (!salvarAcessoAdminPermanente() || !temAcessoAdminPermanente()) {
+            mensagem.textContent = "O login está correto, mas o navegador não conseguiu guardar a autorização. Permita cookies e armazenamento para este site e tente novamente.";
+            return;
+          }
+          abrirAreaAdmin();
+          mensagem.textContent = "Acesso autorizado permanentemente neste navegador. Nas próximas visitas, basta tocar em ADM.";
+          document.getElementById("senha").value = "";
+        } else {
+          mensagem.textContent = "Usuário ou senha incorretos.";
+        }
+      } catch (erro) {
+        mensagem.textContent = erro.message || "Não foi possível validar o acesso. Abra o site pelo endereço HTTPS.";
+      }
+    }
+
+    function sairAdmin() {
+      // Este botão apenas fecha o painel. Não apaga a autorização permanente.
+      adminLogado = false;
+      document.getElementById("adminArea").style.display = "none";
+      const areaAdmin = document.getElementById("adminListaProdutos");
+      if (areaAdmin) areaAdmin.innerHTML = "";
+      document.getElementById("usuario").value = "";
+      document.getElementById("senha").value = "";
+    }
+
+    let categoriaSelecionada = "Todas";
+    let indiceMidiaProduto = 0;
+    const urlsTemporariasVideos = [];
+    // Acumula seleções sucessivas: escolher arquivos novamente não apaga os anteriores.
+    let fotosSelecionadasAdmin = [];
+    let videosSelecionadosAdmin = [];
+
+    function adicionarArquivosSemDuplicar(destino, novos) {
+      novos.forEach(arquivo => {
+        const duplicado = destino.some(item => item.name === arquivo.name && item.size === arquivo.size && item.lastModified === arquivo.lastModified);
+        if (!duplicado) destino.push(arquivo);
+      });
+    }
+
+    function atualizarContadoresMidiaAdmin() {
+      const fotos = document.getElementById('contadorFotosAdmin');
+      const videos = document.getElementById('contadorVideosAdmin');
+      if (fotos) fotos.textContent = fotosSelecionadasAdmin.length + ' foto(s) selecionada(s).';
+      if (videos) videos.textContent = videosSelecionadosAdmin.length + ' vídeo(s) selecionado(s).';
+      renderizarFilaArquivosAdmin(fotosSelecionadasAdmin, "listaFotosSelecionadasAdmin", "foto");
+      renderizarFilaArquivosAdmin(videosSelecionadosAdmin, "listaVideosSelecionadosAdmin", "vídeo");
+      atualizarOpcoesCapaNova();
+    }
+
+    function renderizarFilaArquivosAdmin(arquivos, idArea, tipo) {
+      const area = document.getElementById(idArea);
+      if (!area) return;
+      area.innerHTML = "";
+      arquivos.forEach((arquivo, indice) => {
+        const linha = document.createElement("div");
+        linha.className = "midia-admin-item";
+        const nome = document.createElement("span");
+        nome.textContent = arquivo.name + " (" + (arquivo.size / 1024 / 1024).toFixed(1) + " MB)";
+        const remover = document.createElement("button");
+        remover.type = "button";
+        remover.textContent = "Remover";
+        remover.onclick = () => {
+          arquivos.splice(indice, 1);
+          atualizarContadoresMidiaAdmin();
+        };
+        linha.append(nome, remover);
+        area.appendChild(linha);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const campoFotos = document.getElementById('imagensProduto');
+      const campoVideos = document.getElementById('videoProdutoArquivo');
+      resetarCamposYoutube('videoProdutoLinksContainer');
+      resetarCamposYoutube('editarVideoLinksContainer');
+      campoFotos?.addEventListener('change', () => {
+        adicionarArquivosSemDuplicar(fotosSelecionadasAdmin, Array.from(campoFotos.files || []));
+        campoFotos.value = '';
+        atualizarContadoresMidiaAdmin();
+      });
+      campoVideos?.addEventListener('change', () => {
+        adicionarArquivosSemDuplicar(videosSelecionadosAdmin, Array.from(campoVideos.files || []));
+        campoVideos.value = '';
+        atualizarContadoresMidiaAdmin();
+      });
+    });
+
+    function carregarCategorias() {
+      const barra = document.getElementById("barraCategorias");
+      const seletor = document.getElementById("categoriaProduto");
+      barra.innerHTML = "";
+      seletor.innerHTML = "";
+
+      categorias.forEach(categoria => {
+        const botao = document.createElement("button");
+        botao.textContent = categoria;
+        botao.className = "categoria";
+        if (categoria === categoriaSelecionada) botao.classList.add("ativa");
+        botao.onclick = () => filtrarCategoria(categoria);
+        barra.appendChild(botao);
+
+        if (categoria !== "Todas") {
+          const opcao = document.createElement("option");
+          opcao.value = categoria;
+          opcao.textContent = categoria;
+          seletor.appendChild(opcao);
+        }
+      });
+    }
+
+    function filtrarCategoria(categoria) {
+      categoriaSelecionada = categoria;
+      carregarCategorias();
+      mostrarProdutos();
+      mostrarAbaLoja("produtos");
+    }
+
+    function mostrarAbaLoja(aba) {
+      const produtosEl = document.getElementById("produtos");
+      const carrinhoEl = document.getElementById("carrinho");
+      if (!produtosEl || !carrinhoEl) return;
+      produtosEl.classList.toggle("aba-visivel", aba === "produtos");
+      carrinhoEl.classList.toggle("aba-visivel", aba === "carrinho");
+      produtosEl.style.display = aba === "produtos" ? "block" : "none";
+      carrinhoEl.style.display = aba === "carrinho" ? "block" : "none";
+      document.querySelectorAll(".aba-loja").forEach((b, i) => b.classList.toggle("ativa", (i === 0 && aba === "produtos") || (i === 1 && aba === "carrinho")));
+      if (aba === "carrinho") renderizarCarrinho();
+      window.scrollTo({top: 0, behavior: "smooth"});
+    }
+
+    function atualizarContadorAbaCarrinho() {
+      const el = document.getElementById("contadorAbaCarrinho");
+      if (el) el.textContent = "(" + (Array.isArray(carrinho) ? carrinho.reduce((n, item) => n + Number(item.quantidade || 1), 0) : 0) + ")";
+    }
+
+    function comprimirImagem(arquivo) {
+      return new Promise((resolve, reject) => {
+        const leitor = new FileReader();
+        leitor.onerror = reject;
+        leitor.onload = () => {
+          const imagem = new Image();
+          imagem.onerror = reject;
+          imagem.onload = () => {
+            const limite = 1000;
+            const escala = Math.min(1, limite / Math.max(imagem.width, imagem.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(imagem.width * escala));
+            canvas.height = Math.max(1, Math.round(imagem.height * escala));
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(imagem, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL("image/jpeg", 0.68));
+          };
+          imagem.src = leitor.result;
+        };
+        leitor.readAsDataURL(arquivo);
+      });
+    }
+
+    function linksYoutubeValidos(texto) {
+      return String(texto || "").split(/\r?\n/).map(link => link.trim()).filter(Boolean).filter(link => {
+        try {
+          const u = new URL(link);
+          const host = u.hostname.toLowerCase().replace(/^www\./, "").replace(/^m\./, "");
+          return (host === "youtube.com" || host === "youtu.be" || host === "youtube-nocookie.com") && !!obterUrlIncorporacao(link);
+        } catch (_) { return false; }
+      });
+    }
+
+    function ehLinkYoutube(link) {
+      try {
+        const host = new URL(String(link || "")).hostname.toLowerCase().replace(/^www\./, "").replace(/^m\./, "");
+        return ["youtube.com", "youtu.be", "youtube-nocookie.com"].includes(host);
+      } catch (_) { return false; }
+    }
+
+
+    function adicionarCampoYoutube(containerId, valor = "") {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      const linha = document.createElement("div");
+      linha.className = "youtube-link-campo";
+      const numero = container.querySelectorAll("input[data-youtube-link]").length + 1;
+      const label = document.createElement("label");
+      label.textContent = "Link do YouTube " + numero;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.dataset.youtubeLink = "1";
+      input.placeholder = "Cole aqui somente este link do YouTube";
+      input.value = valor;
+      input.autocomplete = "url";
+      input.addEventListener("input", () => {
+        renumerarCamposYoutube(container);
+        if (containerId === "videoProdutoLinksContainer") atualizarOpcoesCapaNova();
+      });
+      const remover = document.createElement("button");
+      remover.type = "button";
+      remover.textContent = "Remover";
+      remover.addEventListener("click", () => {
+        linha.remove();
+        if (!container.querySelector("input[data-youtube-link]")) adicionarCampoYoutube(containerId);
+        renumerarCamposYoutube(container);
+        if (containerId === "videoProdutoLinksContainer") atualizarOpcoesCapaNova();
+      });
+      linha.append(label, input, remover);
+      container.appendChild(linha);
+      renumerarCamposYoutube(container);
+      if (containerId === "videoProdutoLinksContainer") atualizarOpcoesCapaNova();
+    }
+
+    function renumerarCamposYoutube(container) {
+      if (!container) return;
+      container.querySelectorAll(".youtube-link-campo").forEach((linha, indice) => {
+        const label = linha.querySelector("label");
+        if (label) label.textContent = "Link do YouTube " + (indice + 1);
+      });
+    }
+
+    function resetarCamposYoutube(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = "";
+      adicionarCampoYoutube(containerId);
+    }
+
+    function obterLinksYoutubeFormulario(containerId) {
+      const container = document.getElementById(containerId);
+      return container ? Array.from(container.querySelectorAll("input[data-youtube-link]"))
+        .map(input => input.value.trim()).filter(Boolean) : [];
+    }
+
+    function obterThumbnailYoutube(url) {
+      const embed = obterUrlIncorporacao(url);
+      const match = embed.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{11})/);
+      return match ? "https://img.youtube.com/vi/" + match[1] + "/hqdefault.jpg" : "";
+    }
+
+    let previewCapaObjectUrl = "";
+
+    function obterOpcoesCapaNova() {
+      const opcoes = [];
+      fotosSelecionadasAdmin.forEach((arquivo, indice) => opcoes.push({
+        chave: "imagem:" + indice, tipo: "imagem", arquivo,
+        nome: arquivo.name || ("Foto " + (indice + 1))
+      }));
+      videosSelecionadosAdmin.forEach((arquivo, indice) => opcoes.push({
+        chave: "video:" + indice, tipo: "video", arquivo,
+        nome: arquivo.name || ("Vídeo " + (indice + 1))
+      }));
+      obterLinksYoutubeFormulario("videoProdutoLinksContainer").forEach((url, indice) => opcoes.push({
+        chave: "youtube_link:" + indice, tipo: "youtube_link", src: url,
+        nome: "Vídeo do YouTube " + (indice + 1)
+      }));
+      return opcoes;
+    }
+
+    function atualizarOpcoesCapaNova() {
+      const seletor = document.getElementById("capaMidiaNova");
+      if (!seletor) return;
+      const anterior = seletor.value;
+      const opcoes = obterOpcoesCapaNova();
+      seletor.innerHTML = "";
+      const vazio = document.createElement("option");
+      vazio.value = "";
+      vazio.textContent = opcoes.length ? "Escolha qual mídia será a capa" : "Adicione uma foto ou vídeo primeiro";
+      seletor.appendChild(vazio);
+      opcoes.forEach(opcao => {
+        const option = document.createElement("option");
+        option.value = opcao.chave;
+        const tipo = opcao.tipo === "imagem" ? "Foto" : opcao.tipo === "video" ? "Vídeo enviado" : "YouTube";
+        option.textContent = tipo + " — " + opcao.nome;
+        seletor.appendChild(option);
+      });
+      seletor.value = opcoes.some(opcao => opcao.chave === anterior) ? anterior : (opcoes[0]?.chave || "");
+      atualizarPreviewCapaNova();
+    }
+
+    function atualizarPreviewCapaNova() {
+      const seletor = document.getElementById("capaMidiaNova");
+      const area = document.getElementById("previewCapaNova");
+      if (!seletor || !area) return;
+      if (previewCapaObjectUrl) {
+        URL.revokeObjectURL(previewCapaObjectUrl);
+        previewCapaObjectUrl = "";
+      }
+      area.innerHTML = "";
+      const opcao = obterOpcoesCapaNova().find(item => item.chave === seletor.value);
+      if (!opcao) {
+        const texto = document.createElement("span");
+        texto.className = "admin-ajuda";
+        texto.textContent = "A prévia da capa escolhida aparecerá aqui. Selecione uma foto ou vídeo acima.";
+        area.appendChild(texto);
+        return;
+      }
+      let visual;
+      if (opcao.tipo === "video") {
+        visual = document.createElement("video");
+        visual.controls = true;
+        visual.muted = true;
+        visual.playsInline = true;
+        visual.preload = "metadata";
+        previewCapaObjectUrl = URL.createObjectURL(opcao.arquivo);
+        visual.src = previewCapaObjectUrl;
+      } else {
+        visual = document.createElement("img");
+        visual.alt = "Prévia da capa principal";
+        if (opcao.tipo === "imagem") {
+          previewCapaObjectUrl = URL.createObjectURL(opcao.arquivo);
+          visual.src = previewCapaObjectUrl;
+        } else {
+          visual.src = obterThumbnailYoutube(opcao.src);
+        }
+      }
+      const texto = document.createElement("strong");
+      texto.textContent = "Esta será a capa principal: " + opcao.nome + (opcao.tipo === "youtube_link" ? " (miniatura do vídeo do YouTube)" : "");
+      area.append(visual, texto);
+    }
+
+    function adicionarProduto() {
+      const nome = document.getElementById("nomeProduto").value.trim();
+      const descricao = document.getElementById("descricaoProduto").value.trim();
+      const preco = Number(document.getElementById("precoProduto").value);
+      const categoria = document.getElementById("categoriaProduto").value;
+      const arquivosImagem = fotosSelecionadasAdmin.slice();
+      const linksYoutube = obterLinksYoutubeFormulario("videoProdutoLinksContainer");
+      const linksValidos = linksYoutubeValidos(linksYoutube.join("\n"));
+      const arquivosVideo = videosSelecionadosAdmin.slice();
+
+      if (!nome) {
+        alert("Informe o nome do produto.");
+        document.getElementById("nomeProduto").focus();
+        return;
+      }
+
+      const imagensInvalidas = arquivosImagem.filter(a => !(a.type || "").startsWith("image/"));
+      const videosInvalidos = arquivosVideo.filter(a => {
+        const extensao = /\.(mp4|webm|mov|avi|mkv|m4v|ogg|ogv|3gp|mpeg|mpg)$/i.test(a.name);
+        return !(a.type || "").toLowerCase().startsWith("video/") && !extensao;
+      });
+      if (imagensInvalidas.length) { alert("Selecione somente arquivos de imagem no campo de fotos."); return; }
+      if (videosInvalidos.length) { alert("Selecione somente arquivos de vídeo no campo de vídeos."); return; }
+      if (linksValidos.length !== linksYoutube.length) { alert("Um ou mais links não são links válidos do YouTube. Confira cada campo separado."); return; }
+
+      (async () => {
+        try {
+        // Processa um arquivo por vez para evitar picos de memória ao selecionar muitos vídeos.
+        const fotos = [];
+        for (const arquivo of arquivosImagem) fotos.push(await comprimirImagem(arquivo));
+        const videos = [];
+        for (const arquivo of arquivosVideo) {
+          const src = await new Promise((resolve, reject) => {
+            const leitor = new FileReader();
+            leitor.onload = () => resolve(leitor.result);
+            leitor.onerror = reject;
+            leitor.readAsDataURL(arquivo);
+          });
+          videos.push(src);
+        }
+        const midias = [
+          ...fotos.map(src => ({ tipo: "imagem", src })),
+          ...linksYoutube.map(src => ({ tipo: "youtube_link", src })),
+          ...videos.map(src => ({ tipo: "video", src }))
+        ];
+        const chaveCapa = document.getElementById("capaMidiaNova").value;
+        const [tipoCapa, indiceCapaTexto] = String(chaveCapa || "").split(":");
+        const indiceCapa = Number(indiceCapaTexto);
+        let capaMidia = null;
+        if (tipoCapa === "imagem" && fotos[indiceCapa]) capaMidia = { tipo: "imagem", src: fotos[indiceCapa], nome: arquivosImagem[indiceCapa]?.name || "Foto" };
+        if (tipoCapa === "video" && videos[indiceCapa]) capaMidia = { tipo: "video", src: videos[indiceCapa], nome: arquivosVideo[indiceCapa]?.name || "Vídeo" };
+        if (tipoCapa === "youtube_link" && linksYoutube[indiceCapa]) capaMidia = { tipo: "youtube_link", src: linksYoutube[indiceCapa], nome: "Vídeo do YouTube " + (indiceCapa + 1) };
+        if (!capaMidia) {
+          if (fotos.length) capaMidia = { tipo: "imagem", src: fotos[0], nome: arquivosImagem[0]?.name || "Foto 1" };
+          else if (videos.length) capaMidia = { tipo: "video", src: videos[0], nome: arquivosVideo[0]?.name || "Vídeo 1" };
+          else if (linksYoutube.length) capaMidia = { tipo: "youtube_link", src: linksYoutube[0], nome: "Vídeo do YouTube 1" };
+        }
+        produtos.push({
+          id: Date.now() + Math.floor(Math.random() * 1000),
+          nome,
+          descricao,
+          preco: preco > 0 ? preco : 0,
+          categoria,
+          imagem: capaMidia?.tipo === "imagem" ? capaMidia.src : "",
+          capaMidia,
+          midias
+        });
+        salvarProdutos();
+
+        document.getElementById("nomeProduto").value = "";
+        document.getElementById("descricaoProduto").value = "";
+        document.getElementById("precoProduto").value = "";
+        fotosSelecionadasAdmin = [];
+        videosSelecionadosAdmin = [];
+        atualizarContadoresMidiaAdmin();
+        document.getElementById("imagensProduto").value = "";
+        document.getElementById("capaMidiaNova").innerHTML = "<option value=''>Adicione uma foto ou vídeo primeiro</option>";
+        document.getElementById("previewCapaNova").innerHTML = "<span class='admin-ajuda'>A prévia da capa escolhida aparecerá aqui.</span>";
+        resetarCamposYoutube("videoProdutoLinksContainer");
+        document.getElementById("videoProdutoArquivo").value = "";
+        mostrarProdutos();
+        mostrarListaAdmin();
+        document.getElementById("listaFotosSelecionadasAdmin").innerHTML = "";
+        document.getElementById("listaVideosSelecionadosAdmin").innerHTML = "";
+        alert("Produto adicionado. Capa principal: " + (capaMidia?.nome || "sem mídia") + ". Foram adicionadas " + fotos.length + " foto(s), " + linksYoutube.length + " link(s) do YouTube e " + arquivosVideo.length + " vídeo(s).");
+        } catch (erro) {
+          alert("Não foi possível processar ou salvar as mídias. O espaço disponível no navegador pode ter acabado. Para vídeos grandes, use links públicos.");
+        }
+      })();
+    }
+
+    function mostrarProdutos() {
+      const lista = document.getElementById("listaProdutos");
+      lista.innerHTML = "";
+
+      const termoBusca = (document.getElementById("pesquisaProdutos")?.value || "").trim().toLocaleLowerCase("pt-BR");
+      const filtrados = produtos.filter(p => {
+        const categoriaOk = categoriaSelecionada === "Todas" || p.categoria === categoriaSelecionada;
+        const nomeOk = (p.nome || "").toLocaleLowerCase("pt-BR").includes(termoBusca);
+        return categoriaOk && nomeOk;
+      });
+
+      if (filtrados.length === 0) {
+        lista.innerHTML = '<p class="mensagem-vazia">Nenhum produto cadastrado ainda. Entre no ADM para adicionar os produtos da loja.</p>';
+        return;
+      }
+
+      filtrados.forEach(produto => {
+        const card = document.createElement("article");
+        card.className = "produto";
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
+        card.setAttribute("aria-label", "Ver detalhes de " + produto.nome);
+        card.addEventListener("click", () => abrirDetalheProduto(produto.id));
+        card.addEventListener("keydown", evento => {
+          if (evento.key === "Enter" || evento.key === " ") {
+            evento.preventDefault();
+            abrirDetalheProduto(produto.id);
+          }
+        });
+
+        const elementoCapa = criarElementoCapaProduto(produto);
+
+        const nome = document.createElement("h3");
+        nome.textContent = produto.nome;
+
+        const descricaoCompleta = String(produto.descricao || "").trim();
+        let descricaoCard = null;
+        if (descricaoCompleta) {
+          descricaoCard = document.createElement("p");
+          descricaoCard.className = "produto-descricao-resumo";
+          const palavras = descricaoCompleta.split(/\s+/);
+          const limitePalavras = 20;
+          if (palavras.length > limitePalavras) {
+            descricaoCard.textContent = palavras.slice(0, limitePalavras).join(" ") + "… ";
+            const verMais = document.createElement("button");
+            verMais.type = "button";
+            verMais.className = "produto-ver-mais";
+            verMais.textContent = "Ver mais";
+            verMais.addEventListener("click", evento => {
+              evento.stopPropagation();
+              descricaoCard.textContent = descricaoCompleta + " ";
+              const verMenos = document.createElement("button");
+              verMenos.type = "button";
+              verMenos.className = "produto-ver-mais";
+              verMenos.textContent = "Ver menos";
+              verMenos.addEventListener("click", ev => {
+                ev.stopPropagation();
+                descricaoCard.textContent = palavras.slice(0, limitePalavras).join(" ") + "… ";
+                descricaoCard.appendChild(verMais);
+              });
+              descricaoCard.appendChild(verMenos);
+            });
+            descricaoCard.appendChild(verMais);
+          } else {
+            descricaoCard.textContent = descricaoCompleta;
+          }
+        }
+
+        const tag = document.createElement("span");
+        tag.className = "categoria-tag";
+        tag.textContent = produto.categoria;
+
+        const preco = document.createElement("p");
+        preco.className = "preco";
+        preco.textContent = Number(produto.preco) > 0 ? formatarPreco(produto.preco) : "Preço sob consulta";
+
+        const ver = document.createElement("button");
+        ver.type = "button";
+        ver.className = "botao";
+        ver.textContent = "Ver produto";
+        ver.addEventListener("click", evento => {
+          evento.stopPropagation();
+          abrirDetalheProduto(produto.id);
+        });
+
+        const adicionar = document.createElement("button");
+        adicionar.type = "button";
+        adicionar.className = "botao botao-carrinho botao-adicionar-produto";
+        adicionar.dataset.produtoId = produto.id;
+        adicionar.textContent = "Clique aqui 1 vez para adicionar o produto ao carrinho";
+        adicionar.addEventListener("click", evento => {
+          evento.stopPropagation();
+          adicionarProdutoAoCarrinho(produto.id);
+        });
+
+        card.append(nome);
+        if (elementoCapa) card.appendChild(elementoCapa);
+        card.append(tag);
+        if (descricaoCard) card.appendChild(descricaoCard);
+        card.append(preco, ver, adicionar);
+        lista.appendChild(card);
+      });
+      atualizarTodosBotoesCarrinho();
+    }
+
+
+    let editandoProdutoId = null;
+
+    function editarProduto(id) {
+      if (!adminLogado) return alert("Entre no ADM para editar produtos.");
+      const item = produtos.find(p => String(p.id) === String(id));
+      if (!item) return alert("Produto não encontrado.");
+      editandoProdutoId = item.id;
+      document.getElementById("editorProduto").style.display = "block";
+      document.getElementById("editarNome").value = item.nome || "";
+      document.getElementById("editarDescricao").value = item.descricao || "";
+      document.getElementById("editarPreco").value = item.preco || "";
+      const seletor = document.getElementById("editarCategoria");
+      seletor.innerHTML = "";
+      categorias.filter(c => c !== "Todas").forEach(c => {
+        const op = document.createElement("option"); op.value = c; op.textContent = c; seletor.appendChild(op);
+      });
+      seletor.value = item.categoria || categorias[1];
+      document.getElementById("editarFotos").value = "";
+      resetarCamposYoutube("editarVideoLinksContainer");
+      document.getElementById("editarVideosArquivos").value = "";
+      renderizarMidiasEdicao();
+      document.getElementById("editorProduto").scrollIntoView({behavior:"smooth",block:"center"});
+    }
+
+    function renderizarMidiasEdicao() {
+      const item = produtos.find(p => String(p.id) === String(editandoProdutoId));
+      const area = document.getElementById("editarMidiasLista");
+      if (!item || !area) return;
+      const midias = obterMidiasProduto(item);
+      area.innerHTML = "";
+      const orientacao = document.createElement("p");
+      orientacao.className = "admin-ajuda";
+      orientacao.textContent = "Remova individualmente qualquer foto ou vídeo pelos botões abaixo. Não é obrigatório manter mídias.";
+      area.appendChild(orientacao);
+      midias.forEach((midia, indice) => {
+        const linha = document.createElement("div");
+        linha.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px;border-bottom:1px solid #ddd;";
+        const tipo = document.createElement("span");
+        tipo.textContent = (midia.tipo === "youtube_link" || (midia.tipo === "video" && ehLinkYoutube(midia.src)) ? "▶ Link do YouTube " : midia.tipo === "video" ? "🎬 Vídeo " : "🖼️ Foto ") + (indice + 1);
+        linha.appendChild(tipo);
+        const miniatura = midia.tipo === "youtube_link" ? obterThumbnailYoutube(midia.src) : midia.src;
+        if (midia.tipo === "imagem" || midia.tipo === "youtube_link") {
+          const mini = document.createElement("img");
+          mini.src = miniatura;
+          mini.alt = "Prévia da mídia " + (indice + 1);
+          mini.style.cssText = "width:76px;height:58px;object-fit:contain;background:#eee;border-radius:7px;";
+          linha.appendChild(mini);
+        } else if (midia.tipo === "video") {
+          const mini = document.createElement("video");
+          mini.src = midia.src;
+          mini.muted = true;
+          mini.preload = "metadata";
+          mini.playsInline = true;
+          mini.style.cssText = "width:76px;height:58px;object-fit:contain;background:#111;border-radius:7px;";
+          linha.appendChild(mini);
+        }
+        const capaAtual = obterCapaProduto(item);
+        const principal = document.createElement("input");
+        principal.type = "radio";
+        principal.name = "midiaPrincipal";
+        principal.checked = !!capaAtual && capaAtual.tipo === midia.tipo && capaAtual.src === midia.src;
+        principal.title = "Definir como capa principal";
+        principal.onchange = () => {
+          item.capaMidia = { tipo: midia.tipo, src: midia.src, nome: midia.nome || ("Mídia " + (indice + 1)) };
+          item.imagem = midia.tipo === "imagem" ? midia.src : "";
+          salvarProdutos();
+          mostrarProdutos();
+          renderizarMidiasEdicao();
+        };
+        const label = document.createElement("label");
+        label.append(principal, document.createTextNode(" Usar como capa principal"));
+        linha.appendChild(label);
+        const remover = document.createElement("button");
+        remover.type = "button"; remover.className = "botao"; remover.textContent = "Remover mídia";
+        remover.style.background = "#c62828";
+        remover.onclick = () => {
+          const lista = obterMidiasProduto(item);
+          lista.splice(indice,1); item.midias = lista;
+          const capaFoiRemovida = item.capaMidia?.src === midia.src && item.capaMidia?.tipo === midia.tipo;
+          if (item.imagem === midia.src) item.imagem = "";
+          if (capaFoiRemovida) { item.capaMidia = null; definirCapaPadraoProduto(item); }
+          salvarProdutos();
+          mostrarProdutos();
+          renderizarMidiasEdicao();
+        };
+        linha.appendChild(remover);
+        area.appendChild(linha);
+      });
+      if (!midias.some(m => m.tipo === "imagem")) area.insertAdjacentHTML("beforeend","<p class='admin-ajuda'>Este produto está sem fotos. Isso não impede salvar ou exibir o produto.</p>");
+    }
+
+    async function salvarEdicaoProduto() {
+      const item = produtos.find(p => String(p.id) === String(editandoProdutoId));
+      if (!item) return;
+      const nome = document.getElementById("editarNome").value.trim();
+      const descricao = document.getElementById("editarDescricao").value.trim();
+      const preco = Number(document.getElementById("editarPreco").value);
+      if (!nome) return alert("Informe o nome do produto.");
+      item.nome = nome; item.descricao = descricao; item.preco = preco > 0 ? preco : 0;
+      item.categoria = document.getElementById("editarCategoria").value;
+      const arquivos = Array.from(document.getElementById("editarFotos").files || []);
+      try {
+        for (const arquivo of arquivos) {
+          if (!arquivo.type.startsWith("image/")) continue;
+          const src = await new Promise((resolve,reject) => {
+            const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(arquivo);
+          });
+          item.midias = obterMidiasProduto(item);
+          item.midias.push({tipo:"imagem",src});
+          if (!item.imagem) item.imagem = src;
+        }
+        const arquivosVideoEdicao = Array.from(document.getElementById("editarVideosArquivos").files || []);
+        for (const arquivo of arquivosVideoEdicao) {
+          if (!(arquivo.type || "").startsWith("video/") && !/\.(mp4|webm|mov|avi|mkv|m4v|ogg|ogv|3gp|mpeg|mpg)$/i.test(arquivo.name)) continue;
+          const src = await new Promise((resolve,reject) => { const r=new FileReader(); r.onload=()=>resolve(r.result); r.onerror=reject; r.readAsDataURL(arquivo); });
+          item.midias = obterMidiasProduto(item); item.midias.push({tipo:"video",src});
+        }
+        const linksYoutube = obterLinksYoutubeFormulario("editarVideoLinksContainer");
+        const linksValidos = linksYoutubeValidos(linksYoutube.join("\n"));
+        if (linksYoutube.length !== linksValidos.length) return alert("Um ou mais links não são links válidos do YouTube. Confira cada campo separado.");
+        if (linksYoutube.length) {
+          item.midias = obterMidiasProduto(item);
+          linksYoutube.forEach(url => item.midias.push({tipo:"youtube_link",src:url}));
+        }
+        item.midias = obterMidiasProduto(item);
+        const capaAtual = obterCapaProduto(item);
+        if (!capaAtual || !item.midias.some(m => m.tipo === capaAtual.tipo && m.src === capaAtual.src)) definirCapaPadraoProduto(item);
+        salvarProdutos();
+        cancelarEdicaoProduto();
+        mostrarProdutos(); mostrarListaAdmin();
+        alert("Produto atualizado com sucesso.");
+      } catch (e) {
+        alert("O armazenamento do navegador pode ter atingido o limite disponível. Não há limite fixo de quantidade na loja, mas o dispositivo limita o espaço total. Para muitos vídeos grandes, use links públicos ou armazenamento online.");
+      }
+    }
+
+    function cancelarEdicaoProduto() {
+      editandoProdutoId = null;
+      document.getElementById("editorProduto").style.display = "none";
+    }
+
+    function removerProduto(id) {
+      if (!adminLogado || document.getElementById("adminArea").style.display !== "block") {
+        alert("Entre no ADM para excluir produtos.");
+        return;
+      }
+
+      const item = produtos.find(p => String(p.id) === String(id));
+      if (!item) {
+        alert("Produto não encontrado.");
+        return;
+      }
+      if (!confirm('Deseja remover "' + item.nome + '"?')) return;
+
+      produtos = produtos.filter(p => String(p.id) !== String(id));
+      salvarProdutos();
+      mostrarProdutos();
+      mostrarListaAdmin();
+      alert("Produto removido.");
+    }
+
+    function mostrarListaAdmin() {
+      const area = document.getElementById("adminListaProdutos");
+      if (!area) return;
+      area.innerHTML = "";
+      if (!adminLogado || document.getElementById("adminArea").style.display !== "block") return;
+
+      if (produtos.length === 0) {
+        area.textContent = "Não há produtos cadastrados.";
+        return;
+      }
+
+      produtos.forEach(item => {
+        const linha = document.createElement("div");
+        linha.style.cssText = "display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #ddd;";
+
+        const nome = document.createElement("span");
+        nome.textContent = item.nome + " — " + (Number(item.preco) > 0 ? formatarPreco(item.preco) : "Preço sob consulta");
+
+        const botao = document.createElement("button");
+        botao.type = "button";
+        botao.className = "botao";
+        botao.textContent = "Remover";
+        botao.style.background = "#c62828";
+        const editar = document.createElement("button");
+        editar.type = "button";
+        editar.className = "botao";
+        editar.textContent = "Editar fotos/vídeos";
+        editar.onclick = function () { editarProduto(item.id); };
+        botao.onclick = function () { removerProduto(item.id); };
+
+        linha.append(nome, editar, botao);
+        area.appendChild(linha);
+      });
+    }
+
+
+    let produtoDetalheAtual = null;
+
+    function formatarPreco(valor) {
+      return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+
+    let carrinho = [];
+    try {
+      const salvo = JSON.parse(localStorage.getItem("lojaNicksCarrinho") || "[]");
+      if (Array.isArray(salvo)) carrinho = salvo;
+    } catch (_) { carrinho = []; }
+
+    function salvarCarrinho() {
+      try {
+        localStorage.setItem("lojaNicksCarrinho", JSON.stringify(carrinho));
+      } catch (erro) {
+        console.warn("Não foi possível salvar o carrinho neste navegador:", erro);
+      }
+      renderizarCarrinho();
+    }
+
+    function adicionarProdutoAoCarrinho(id) {
+      const produto = produtos.find(item => String(item.id) === String(id))
+        || (produtoDetalheAtual && String(produtoDetalheAtual.id) === String(id) ? produtoDetalheAtual : null);
+      if (!produto) {
+        alert("Não foi possível encontrar este produto. Atualize a página e tente novamente.");
+        return;
+      }
+
+      const existente = carrinho.find(item => String(item.id) === String(produto.id));
+      if (existente) {
+        existente.quantidade = Math.max(1, Number(existente.quantidade) || 1) + 1;
+      } else {
+        carrinho.push({
+          id: produto.id,
+          nome: produto.nome || "Produto",
+          preco: Number(produto.preco) || 0,
+          quantidade: 1
+        });
+      }
+
+      salvarCarrinho();
+      atualizarContadorAbaCarrinho();
+      mostrarMensagemCarrinho();
+      atualizarBotoesCarrinho(produto.id);
+    }
+
+    let temporizadorMensagemCarrinho = null;
+    function mostrarMensagemCarrinho() {
+      const mensagem = document.getElementById("mensagemCarrinhoToast");
+      if (!mensagem) return;
+      mensagem.textContent = "Produto adicionado ao carrinho";
+      mensagem.classList.add("visivel");
+      if (temporizadorMensagemCarrinho) clearTimeout(temporizadorMensagemCarrinho);
+      temporizadorMensagemCarrinho = setTimeout(() => mensagem.classList.remove("visivel"), 7000);
+    }
+
+    function atualizarTodosBotoesCarrinho() {
+      document.querySelectorAll(".botao-adicionar-produto").forEach(botao => {
+        const estaNoCarrinho = carrinho.some(item => String(item.id) === String(botao.dataset.produtoId));
+        botao.textContent = "Clique aqui 1 vez para adicionar o produto ao carrinho";
+      });
+      const botaoDetalhe = document.querySelector('#modalProduto button[onclick="adicionarAoCarrinho()"]');
+      if (botaoDetalhe && produtoDetalheAtual) {
+        const estaNoCarrinho = carrinho.some(item => String(item.id) === String(produtoDetalheAtual.id));
+        botaoDetalhe.textContent = "Clique aqui 1 vez para adicionar o produto ao carrinho";
+      }
+    }
+
+    function atualizarBotoesCarrinho(id) {
+      // Atualiza o estado visual de todos os produtos, não apenas do último adicionado.
+      atualizarTodosBotoesCarrinho();
+    }
+
+    function adicionarAoCarrinho() {
+      if (!produtoDetalheAtual) return;
+      adicionarProdutoAoCarrinho(produtoDetalheAtual.id);
+    }
+
+    function alterarQuantidadeCarrinho(id, delta) {
+      const item = carrinho.find(p => String(p.id) === String(id));
+      if (!item) return;
+      item.quantidade += delta;
+      if (item.quantidade <= 0) carrinho = carrinho.filter(p => String(p.id) !== String(id));
+      salvarCarrinho();
+      atualizarTodosBotoesCarrinho();
+    }
+
+    function removerDoCarrinho(id) {
+      carrinho = carrinho.filter(p => String(p.id) !== String(id));
+      salvarCarrinho();
+      atualizarTodosBotoesCarrinho();
+    }
+
+    function renderizarCarrinho() {
+      const lista = document.getElementById("listaCarrinho");
+      if (!lista) return;
+      lista.innerHTML = "";
+      let total = 0;
+      let quantidadeTotal = 0;
+      carrinho = carrinho.filter(item => item && item.id !== undefined).map(item => ({
+        ...item,
+        quantidade: Math.max(1, Math.floor(Number(item.quantidade) || 1)),
+        preco: Math.max(0, Number(item.preco) || 0)
+      }));
+      carrinho.forEach(item => {
+        const produtoAtual = produtos.find(p => String(p.id) === String(item.id));
+        if (produtoAtual) { item.nome = produtoAtual.nome; item.preco = Number(produtoAtual.preco) || 0; }
+        const subtotal = (Number(item.preco) || 0) * item.quantidade;
+        total += subtotal;
+        quantidadeTotal += item.quantidade;
+        const linha = document.createElement("div");
+        linha.className = "carrinho-linha";
+        const nome = document.createElement("strong");
+        nome.textContent = item.nome + " — " + formatarPreco(item.preco);
+        const controles = document.createElement("div");
+        const menos = document.createElement("button"); menos.type = "button"; menos.textContent = "−"; menos.onclick = () => alterarQuantidadeCarrinho(item.id, -1);
+        const qtd = document.createElement("span"); qtd.textContent = " " + item.quantidade + " ";
+        const mais = document.createElement("button"); mais.type = "button"; mais.textContent = "+"; mais.onclick = () => alterarQuantidadeCarrinho(item.id, 1);
+        const remover = document.createElement("button"); remover.type = "button"; remover.textContent = "Remover"; remover.onclick = () => removerDoCarrinho(item.id);
+        controles.append(menos, qtd, mais, remover);
+        const subtotalEl = document.createElement("span"); subtotalEl.className = "carrinho-subtotal"; subtotalEl.textContent = "Subtotal: " + formatarPreco(subtotal);
+        linha.append(nome, controles, subtotalEl);
+        lista.appendChild(linha);
+      });
+      if (!carrinho.length) lista.innerHTML = '<p class="mensagem-vazia">Seu carrinho está vazio. Adicione produtos para comprar.</p>';
+      document.getElementById("totalCarrinho").textContent = "Total dos produtos: " + formatarPreco(total);
+      document.getElementById("contadorCarrinho").textContent = quantidadeTotal;
+      try { localStorage.setItem("lojaNicksCarrinho", JSON.stringify(carrinho)); } catch (_) {}
+    
+      atualizarContadorAbaCarrinho();
+    }
+
+    function comprarCarrinhoWhatsApp() {
+      if (!carrinho.length) { alert("Adicione pelo menos um produto ao carrinho."); return; }
+      const enderecoCampo = document.getElementById("enderecoCarrinho");
+      const cepCampo = document.getElementById("cepCarrinho");
+      const endereco = enderecoCampo.value.trim();
+      const cep = cepCampo.value.replace(/\D/g, "");
+      if (!endereco) { alert("Informe o endereço completo para calcularmos a entrega."); enderecoCampo.focus(); return; }
+      if (!cep) { alert("Informe o CEP."); cepCampo.focus(); return; }
+      const linhas = carrinho.map(item => `${item.nome} — Quantidade: ${item.quantidade} — Valor unitário: ${formatarPreco(item.preco)} — Subtotal: ${formatarPreco(item.preco * item.quantidade)}`);
+      const total = carrinho.reduce((soma, item) => soma + item.preco * item.quantidade, 0);
+      const mensagem = `Olá! Quero comprar todos estes produtos da Loja Nicks:\n\n${linhas.join("\n")}\n\nTotal dos produtos: ${formatarPreco(total)}\nEndereço para entrega: ${endereco}\nCEP: ${cep}\n\nPor favor, calculem o frete e me enviem o valor total (produtos + entrega) e o link de pagamento. Ainda não realizei o pagamento.`;
+      window.open(`https://wa.me/5561995900539?text=${encodeURIComponent(mensagem)}`, "_blank", "noopener,noreferrer");
+    }
+
+    function obterMidiasProduto(produto) {
+      if (Array.isArray(produto.midias) && produto.midias.length) return produto.midias;
+      return produto.imagem ? [{ tipo: "imagem", src: produto.imagem }] : [];
+    }
+
+
+    function definirCapaPadraoProduto(produto) {
+      const midias = obterMidiasProduto(produto);
+      const capa = midias.find(m => m.tipo === "imagem") || midias.find(m => m.tipo === "video") || midias.find(m => m.tipo === "youtube_link") || null;
+      produto.capaMidia = capa ? { tipo: capa.tipo, src: capa.src, nome: capa.nome || "Mídia principal" } : null;
+      produto.imagem = capa?.tipo === "imagem" ? capa.src : "";
+    }
+
+    function obterCapaProduto(produto) {
+      const midias = obterMidiasProduto(produto);
+      if (produto.capaMidia?.src) {
+        const encontrada = midias.find(m => m.tipo === produto.capaMidia.tipo && m.src === produto.capaMidia.src);
+        if (encontrada) return { ...encontrada, nome: produto.capaMidia.nome || encontrada.nome || "Capa principal" };
+      }
+      if (produto.imagem) {
+        const imagem = midias.find(m => m.tipo === "imagem" && m.src === produto.imagem);
+        if (imagem) return imagem;
+      }
+      return midias.find(m => m.tipo === "imagem") || midias.find(m => m.tipo === "video") || midias.find(m => m.tipo === "youtube_link") || null;
+    }
+
+    function criarElementoCapaProduto(produto) {
+      const capa = obterCapaProduto(produto);
+      if (!capa?.src) return null;
+      const area = document.createElement("div");
+      area.className = "produto-capa-media";
+      let visual;
+      if (capa.tipo === "video") {
+        visual = document.createElement("video");
+        visual.muted = true;
+        visual.loop = true;
+        visual.autoplay = true;
+        visual.playsInline = true;
+        visual.preload = "metadata";
+        visual.src = capa.src;
+      } else {
+        visual = document.createElement("img");
+        visual.alt = "Capa principal de " + (produto.nome || "produto");
+        visual.src = capa.tipo === "youtube_link" ? obterThumbnailYoutube(capa.src) : capa.src;
+      }
+      area.appendChild(visual);
+      if (capa.tipo !== "imagem") {
+        const play = document.createElement("span");
+        play.className = "produto-capa-play";
+        play.textContent = "▶";
+        area.appendChild(play);
+      }
+      return area;
+    }
+
+    function renderizarGaleriaProduto() {
+      const area = document.getElementById("galeriaProduto");
+      const todasMidias = obterMidiasProduto(produtoDetalheAtual || {});
+      const linksYoutube = todasMidias.filter(m => m.tipo === "youtube_link" || (m.tipo === "video" && ehLinkYoutube(m.src)));
+      const midiasVisuais = todasMidias.filter(m => !(m.tipo === "youtube_link" || (m.tipo === "video" && ehLinkYoutube(m.src))));
+      area.innerHTML = "";
+
+      if (midiasVisuais.length) {
+        if (indiceMidiaProduto < 0) indiceMidiaProduto = midiasVisuais.length - 1;
+        if (indiceMidiaProduto >= midiasVisuais.length) indiceMidiaProduto = 0;
+        const midia = midiasVisuais[indiceMidiaProduto];
+        const palco = document.createElement("div");
+        palco.className = "galeria-palco";
+
+        if (midia.tipo === "video") {
+          const video = document.createElement("video");
+          video.controls = true;
+          video.playsInline = true;
+          video.preload = "metadata";
+          video.src = midia.src;
+          palco.appendChild(video);
+        } else {
+          const img = document.createElement("img");
+          img.src = midia.src;
+          img.alt = produtoDetalheAtual?.nome || "Foto do produto";
+          palco.appendChild(img);
+        }
+
+        const controles = document.createElement("div");
+        controles.className = "galeria-controles";
+        const anterior = document.createElement("button");
+        anterior.type = "button";
+        anterior.textContent = "← Anterior";
+        anterior.disabled = midiasVisuais.length < 2;
+        anterior.onclick = () => { indiceMidiaProduto = (indiceMidiaProduto - 1 + midiasVisuais.length) % midiasVisuais.length; renderizarGaleriaProduto(); };
+        const contador = document.createElement("span");
+        contador.className = "galeria-contador";
+        contador.textContent = (indiceMidiaProduto + 1) + " / " + midiasVisuais.length;
+        const proximo = document.createElement("button");
+        proximo.type = "button";
+        proximo.textContent = "Próxima →";
+        proximo.disabled = midiasVisuais.length < 2;
+        proximo.onclick = () => { indiceMidiaProduto = (indiceMidiaProduto + 1) % midiasVisuais.length; renderizarGaleriaProduto(); };
+        controles.append(anterior, contador, proximo);
+        area.append(palco, controles);
+      } else if (!linksYoutube.length) {
+        area.textContent = "Nenhuma foto ou vídeo cadastrado.";
+      }
+
+      if (linksYoutube.length) {
+        const secaoLinks = document.createElement("section");
+        secaoLinks.className = "lista-links-youtube-produto";
+        secaoLinks.style.cssText = "display:grid;gap:10px;margin:16px auto;max-width:520px;width:100%;";
+        const titulo = document.createElement("h3");
+        titulo.textContent = "Vídeos deste produto no YouTube";
+        titulo.style.cssText = "margin:8px 0;text-align:center;";
+        secaoLinks.appendChild(titulo);
+        linksYoutube.forEach((midia, indice) => {
+          const link = document.createElement("a");
+          link.href = midia.src;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.textContent = "Ver vídeo no YouTube do produto " + (indice + 1);
+          link.className = "botao";
+          link.style.cssText = "display:flex;align-items:center;justify-content:center;padding:13px 16px;text-decoration:none;text-align:center;";
+          secaoLinks.appendChild(link);
+        });
+        area.appendChild(secaoLinks);
+      }
+    }
+
+    function abrirDetalheProduto(id) {
+      const produto = produtos.find(p => String(p.id) === String(id));
+      if (!produto) return;
+      produtoDetalheAtual = produto;
+      const midiasVisuais = obterMidiasProduto(produto).filter(m => !(m.tipo === "youtube_link" || (m.tipo === "video" && ehLinkYoutube(m.src))));
+      const capaSelecionada = obterCapaProduto(produto);
+      const indiceCapaGaleria = capaSelecionada ? midiasVisuais.findIndex(m => m.tipo === capaSelecionada.tipo && m.src === capaSelecionada.src) : -1;
+      indiceMidiaProduto = indiceCapaGaleria >= 0 ? indiceCapaGaleria : 0;
+      document.getElementById("modalProdutoNome").textContent = produto.nome || "Produto";
+      document.getElementById("modalProdutoCategoria").textContent = produto.categoria || "";
+      document.getElementById("modalProdutoPreco").textContent = Number(produto.preco) > 0 ? formatarPreco(produto.preco) : "Preço sob consulta";
+      document.getElementById("modalProdutoDescricao").textContent = produto.descricao || "Entre em contato para saber mais sobre este produto.";
+      const botaoCarrinhoDetalhe = document.querySelector('#modalProduto button[onclick="adicionarAoCarrinho()"]');
+      if (botaoCarrinhoDetalhe) botaoCarrinhoDetalhe.textContent = "Clique aqui 1 vez para adicionar o produto ao carrinho";
+      renderizarGaleriaProduto();
+      document.getElementById("modalProduto").classList.add("aberto");
+      document.body.style.overflow = "hidden";
+    }
+
+    function fecharDetalheProduto() {
+      // Limpa a galeria antes de fechar para interromper qualquer vídeo em reprodução.
+      const galeria = document.getElementById("galeriaProduto");
+      if (galeria) galeria.innerHTML = "";
+      document.getElementById("modalProduto").classList.remove("aberto");
+      document.body.style.overflow = "";
+      produtoDetalheAtual = null;
+    }
+
+    function fecharDetalheProdutoFora(evento) {
+      if (evento.target.id === "modalProduto") fecharDetalheProduto();
+    }
+
+    function comprarProdutoDetalhe() {
+      if (!produtoDetalheAtual) return;
+      const numeroWhatsApp = "5561995900539";
+      const nome = produtoDetalheAtual.nome || "produto";
+      const preco = Number(produtoDetalheAtual.preco) > 0 ? formatarPreco(produtoDetalheAtual.preco) : "A combinar";
+      const enderecoCampo = document.getElementById("enderecoEntrega");
+      const cepCampo = document.getElementById("cepEntrega");
+      const endereco = enderecoCampo.value.trim();
+      const cep = cepCampo.value.trim();
+      const cepNumeros = cep.replace(/\D/g, "");
+
+      if (!endereco) {
+        alert("Informe o endereço completo para calcularmos a entrega.");
+        enderecoCampo.focus();
+        return;
+      }
+      if (!cepNumeros) {
+        alert("Informe o CEP.");
+        cepCampo.focus();
+        return;
+      }
+
+      const mensagem = `Olá! Quero solicitar a compra deste produto pela Loja Nicks.
+
+Produto: ${nome}.
+Valor do produto: ${preco}.
+Endereço para entrega: ${endereco}.
+CEP: ${cepNumeros}.
+
+Por favor, calculem o frete e me enviem pelo WhatsApp o valor total (produto + entrega) e o link de pagamento. Ainda não realizei o pagamento.`;
+      const url = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(mensagem)}`;
+      window.open(url, "_blank", "noopener,noreferrer");
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      const cepCampo = document.getElementById("cepEntrega");
+      if (!cepCampo) return;
+      [cepCampo, document.getElementById("cepCarrinho")].filter(Boolean).forEach(campo => {
+        campo.addEventListener("input", function () {
+          // Aceita qualquer quantidade de números no CEP e envia o valor digitado.
+          campo.value = campo.value.replace(/\D/g, "");
+        });
+      });
+    });
+
+    document.addEventListener("keydown", function(evento) {
+      if (evento.key === "Escape") fecharDetalheProduto();
+      if (document.getElementById("modalProduto").classList.contains("aberto") && produtoDetalheAtual) {
+        const midias = obterMidiasProduto(produtoDetalheAtual).filter(m => !(m.tipo === "youtube_link" || (m.tipo === "video" && ehLinkYoutube(m.src))));
+        if (evento.key === "ArrowRight" && midias.length > 1) { indiceMidiaProduto = (indiceMidiaProduto + 1) % midias.length; renderizarGaleriaProduto(); }
+        if (evento.key === "ArrowLeft" && midias.length > 1) { indiceMidiaProduto = (indiceMidiaProduto - 1 + midias.length) % midias.length; renderizarGaleriaProduto(); }
+      }
+    });
+
+    function obterUrlIncorporacao(url) {
+      try {
+        const u = new URL(String(url || "").trim());
+        if (u.protocol !== "https:" && u.protocol !== "http:") return "";
+        const host = u.hostname.toLowerCase().replace(/^www\./, "").replace(/^m\./, "");
+        let id = "";
+
+        if (host === "youtu.be") {
+          id = u.pathname.split("/").filter(Boolean)[0] || "";
+        } else if (host === "youtube.com" || host === "youtube-nocookie.com") {
+          const partes = u.pathname.split("/").filter(Boolean);
+          if (u.pathname === "/watch") id = u.searchParams.get("v") || "";
+          else if (["embed", "shorts", "live", "v"].includes(partes[0])) id = partes[1] || "";
+        }
+
+        if (id) {
+          // IDs padrão do YouTube têm 11 caracteres. Rejeita URLs incompletas.
+          if (!/^[A-Za-z0-9_-]{11}$/.test(id)) return "";
+          const parametros = new URLSearchParams({ rel: "0", playsinline: "1", enablejsapi: "1" });
+          const inicio = u.searchParams.get("start") || u.searchParams.get("t");
+          if (inicio) {
+            const segundos = /^\d+$/.test(inicio) ? inicio : (inicio.match(/(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/) || []).slice(1).reduce((total, n, i) => total + (Number(n || 0) * [3600, 60, 1][i]), 0);
+            if (Number(segundos) > 0) parametros.set("start", String(Number(segundos)));
+          }
+          return "https://www.youtube.com/embed/" + id + "?" + parametros.toString();
+        }
+
+        if (host === "vimeo.com") {
+          const idVimeo = u.pathname.split("/").filter(Boolean).pop();
+          if (idVimeo && /^\d+$/.test(idVimeo)) return "https://player.vimeo.com/video/" + idVimeo;
+        }
+        if (host === "player.vimeo.com" && u.pathname.startsWith("/video/")) return u.href;
+        return u.href;
+      } catch (_) { return ""; }
+    }
+
+
+    document.getElementById("pesquisaProdutos").addEventListener("input", mostrarProdutos);
+
+    carregarCategorias();
+    mostrarProdutos();
+    renderizarCarrinho();
+    mostrarListaAdmin();
+  </script>
+
+
+
+<script>
+function irParaSecao(secao) {
+  const alvo = document.getElementById(secao);
+  if (!alvo) {
+    alert("Não encontrei essa seção na página.");
+    return;
+  }
+  alvo.scrollIntoView({ behavior: "smooth", block: "start" });
+  document.querySelectorAll(".navegacao-paginas button").forEach((botao) => {
+    botao.classList.toggle("ativo", botao.getAttribute("onclick").includes("'" + secao + "'"));
+  });
+}
+</script>
+
+
+<script>
+(function () {
+  const secoesDaLoja = ["inicio", "produtos", "contato"];
+  const estadoInicial = {
+    lojaNicks: true,
+    indiceLoja: 0,
+    secaoLoja: (location.hash || "#inicio").slice(1)
+  };
+
+  // Marca a entrada inicial sem criar uma entrada extra no histórico.
+  if (!history.state || !history.state.lojaNicks) {
+    history.replaceState(estadoInicial, "", location.href);
+  }
+
+  function secaoAtual() {
+    const hash = (location.hash || "#inicio").slice(1);
+    return document.getElementById(hash) ? hash : "inicio";
+  }
+
+  function atualizarBotoes() {
+    const estado = history.state || {};
+    const voltar = document.getElementById("voltarPagina");
+    const avancar = document.getElementById("avancarPagina");
+    if (voltar) voltar.disabled = !(estado.lojaNicks && estado.indiceLoja > 0);
+    if (avancar) avancar.disabled = !estado.lojaNicks;
+    const atual = secaoAtual();
+    document.querySelectorAll('.navegacao-paginas a, nav a').forEach(function (link) {
+      const destino = (link.getAttribute("href") || "").replace(/^#/, "") || "inicio";
+      link.classList.toggle("ativo", destino === atual);
+      if (destino === atual) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+  }
+
+  function irParaSecao(secao) {
+    if (!secoesDaLoja.includes(secao)) return;
+    const alvo = document.getElementById(secao);
+    if (!alvo) return;
+
+    const estadoAtual = history.state || {};
+    const indice = estadoAtual.lojaNicks ? (estadoAtual.indiceLoja || 0) + 1 : 1;
+    history.pushState({
+      lojaNicks: true,
+      indiceLoja: indice,
+      secaoLoja: secao,
+      podeAvancar: false
+    }, "", "#" + secao);
+
+    alvo.scrollIntoView({ behavior: "smooth", block: "start" });
+    atualizarBotoes();
+  }
+
+  // Intercepta os links internos para que cada troca de seção entre no histórico.
+  document.addEventListener("click", function (evento) {
+    const link = evento.target.closest('a[href^="#"]');
+    if (!link) return;
+    const destino = (link.getAttribute("href") || "").slice(1) || "inicio";
+    if (!secoesDaLoja.includes(destino)) return;
+    evento.preventDefault();
+    if (destino === secaoAtual()) {
+      document.getElementById(destino).scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    irParaSecao(destino);
+  });
+
+  window.voltarNaLoja = function () {
+    const estado = history.state || {};
+    if (estado.lojaNicks && estado.indiceLoja > 0) history.back();
+  };
+
+  window.avancarNaLoja = function () {
+    const estado = history.state || {};
+    if (estado.lojaNicks && estado.podeAvancar === true) history.forward();
+  };
+
+  window.addEventListener("popstate", function (evento) {
+    const secao = evento.state && evento.state.lojaNicks
+      ? evento.state.secaoLoja
+      : secaoAtual();
+    const alvo = document.getElementById(secoesDaLoja.includes(secao) ? secao : "inicio");
+    if (alvo) alvo.scrollIntoView({ behavior: "smooth", block: "start" });
+    atualizarBotoes();
+  });
+
+  // Recalcula o botão Avançar após voltar, usando o estado de histórico disponível.
+  window.addEventListener("pageshow", atualizarBotoes);
+  window.addEventListener("hashchange", atualizarBotoes);
+  document.addEventListener("DOMContentLoaded", atualizarBotoes);
+  atualizarBotoes();
+})();
+</script>
+
+
+</body>
+</html>
